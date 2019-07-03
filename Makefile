@@ -6,6 +6,6 @@ test: ycc
 	./test.sh
 
 clean:
-	rm -f 9cc *.o *~ tmp*
+	rm -f ycc *.o *~ tmp*
 
 .PHONY: test clean
