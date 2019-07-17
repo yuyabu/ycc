@@ -59,6 +59,15 @@ void expect(char op);
 int expect_number();
 
 void gen(Node *node);
+Node *unary();
+
+Node *unary() {
+  if (consume('+'))
+    return term();
+  if (consume('-'))
+    return new_node(ND_SUB, new_node_num(0), term());
+  return term();
+}
 
 void gen(Node *node) {
   if (node->kind == ND_NUM) {
@@ -146,13 +155,13 @@ Node *expr() {
 
 //積商の項をつくる
 Node *mul() {
-  Node *node = term();
+  Node *node = unary();
 
   for (;;) {
     if (consume('*'))
-      node = new_node(ND_MUL, node, term());
+      node = new_node(ND_MUL, node, unary());
     else if (consume('/'))
-      node = new_node(ND_DIV, node, term());
+      node = new_node(ND_DIV, node, unary());
     else
       return node;
   }
