@@ -62,6 +62,10 @@ int expect_number();
 void gen(Node *node);
 Node *unary();
 
+
+Token *new_token(TokenKind kind, Token *cur, char *str);
+Token *new_token_with_len(TokenKind kind, Token *cur, char *str,int len);
+
 Node *unary() {
   if (consume("+"))
     return term();
@@ -224,6 +228,14 @@ Token *new_token(TokenKind kind, Token *cur, char *str) {
   cur->next = tok;
   return tok;
 }
+
+//長さ付きトークンの作成メソッド
+Token *new_token_with_len(TokenKind kind, Token *cur, char *str,int len){
+  Token *tok = new_token(kind,cur,str);
+  tok->len=len;
+  return tok;
+}
+
 
 // 入力文字列pをトークナイズしてそれを返す
 Token *tokenize(char *p) {
