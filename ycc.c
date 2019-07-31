@@ -13,6 +13,12 @@ typedef enum {
   ND_MUL, // *
   ND_DIV, // /
   ND_NUM, // 整数
+  ND_EQU, // ==
+  ND_NEQ, // !=  (node not equal)
+  ND_LSS, // <   (less than)
+  ND_LEQ, // <=  (less equal)
+  ND_GTR, // >   (greater than)
+  ND_GEQ // >=  (greater equal)
 } NodeKind;
 
 typedef struct Node Node;
@@ -50,8 +56,13 @@ Token *token;
 char *user_input;
 
 Node *expr();
-Node *term();
+Node *equality();
+Node *relational();
+Node *add();
 Node *mul();
+Node *unary();
+Node *term();
+
 Node *new_node(NodeKind kind, Node *lhs, Node *rhs);
 Node *new_node_num(int val);
 
@@ -60,7 +71,6 @@ void expect(char *op);
 int expect_number();
 
 void gen(Node *node);
-Node *unary();
 
 
 Token *new_token(TokenKind kind, Token *cur, char *str);
@@ -99,6 +109,11 @@ void gen(Node *node) {
   case ND_DIV:
     printf("  cqo\n");
     printf("  idiv rdi\n");
+    break;
+  case ND_EQU:
+    printf("  cmp rax, rdi\n");
+    printf("  sete al\n");
+    printf("  movzb rax, al\n");
   }
 
   printf("  push rax\n");
@@ -146,6 +161,26 @@ Node *new_node_num(int val) {
 }
 //式をつくる
 Node *expr() {
+	return equality();
+}
+Node *equality(){
+	Node *node = relational();
+
+	for(;;){
+		if(consume("==")){
+			node = new_node(ND_EQU, node ,relational());
+		}
+		return node;
+	}
+}
+
+Node *relational(){
+	Node *node  = add();
+
+	//TODO比較演算子のパースを実装する
+	return node;
+}
+Node *add(){
   Node *node = mul();
 
   for (;;) {
@@ -156,6 +191,7 @@ Node *expr() {
     else
       return node;
   }
+
 }
 
 //積商の項をつくる
@@ -248,6 +284,16 @@ Token *tokenize(char *p) {
     if (isspace(*p)) {
       p++;
       continue;
+    }
+
+    if (
+		    strncmp(p,"==",2) == 0
+		    
+		    ){
+	    cur = new_token_with_len(TK_RESERVED, cur, p,2);
+	    p+=2;
+	    continue;
+   
     }
 
     if (
