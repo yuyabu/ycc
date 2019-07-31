@@ -112,6 +112,12 @@ void gen(Node *node) {
     printf("  cmp rax, rdi\n");
     printf("  sete al\n");
     printf("  movzb rax, al\n");
+    break;
+  case ND_NEQ:
+    printf("  cmp rax, rdi\n");
+    printf("  setne al\n");
+    printf("  movzb rax, al\n");
+    break;
   }
 
   printf("  push rax\n");
@@ -165,8 +171,10 @@ Node *equality() {
   for (;;) {
     if (consume("==")) {
       node = new_node(ND_EQU, node, relational());
-    }
-    return node;
+    } else if (consume("!=")) {
+      node = new_node(ND_NEQ, node, relational());
+    } else
+      return node;
   }
 }
 
@@ -276,7 +284,7 @@ Token *tokenize(char *p) {
       continue;
     }
 
-    if (strncmp(p, "==", 2) == 0
+    if (strncmp(p, "==", 2) == 0 || strncmp(p, "!=", 2) == 0
 
     ) {
       cur = new_token_with_len(TK_RESERVED, cur, p, 2);
