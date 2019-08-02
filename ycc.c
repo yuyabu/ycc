@@ -118,6 +118,11 @@ void gen(Node *node) {
     printf("  setne al\n");
     printf("  movzb rax, al\n");
     break;
+  case ND_LSS:
+    printf("  cmp rax, rdi\n");
+    printf("  setl al\n");
+    printf("  movzb rax, al\n");
+    break;
   }
 
   printf("  push rax\n");
@@ -180,7 +185,12 @@ Node *equality() {
 
 Node *relational() {
   Node *node = add();
-
+  for (;;) {
+    if (consume("<")) {
+      node = new_node(ND_LSS, node, add());
+    } else
+      return node;
+  }
   // TODO比較演算子のパースを実装する
   return node;
 }
@@ -292,8 +302,8 @@ Token *tokenize(char *p) {
       continue;
     }
 
-    if (*p == '+' || *p == '-' || *p == '*' || *p == '/' || *p == '(' ||
-        *p == ')') {
+    if (*p == '<' || *p == '+' || *p == '-' || *p == '*' || *p == '/' ||
+        *p == '(' || *p == ')') {
       cur = new_token(TK_RESERVED, cur, p++);
       continue;
     }
