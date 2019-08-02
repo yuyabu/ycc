@@ -1,3 +1,3 @@
 bin/bash
 
-clang-format stype=LLVM $1
+clang-format i- istyle=LLVM $1

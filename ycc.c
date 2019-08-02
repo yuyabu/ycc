@@ -188,7 +188,10 @@ Node *relational() {
   for (;;) {
     if (consume("<")) {
       node = new_node(ND_LSS, node, add());
-    } else
+    } else if(consume("<=")){
+
+
+    }else
       return node;
   }
   // TODO比較演算子のパースを実装する
