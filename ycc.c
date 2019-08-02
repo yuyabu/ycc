@@ -143,6 +143,11 @@ void gen(Node *node) {
             printf("  setg al\n");
             printf("  movzb rax, al\n");
             break;
+        case ND_GEQ:
+            printf("  cmp rax, rdi\n");
+            printf("  setge al\n");
+            printf("  movzb rax, al\n");
+            break;
 
     }
 
@@ -215,8 +220,10 @@ Node *relational() {
             node = new_node(ND_LEQ, node, add());
         } else if (consume(">")) {
             node = new_node(ND_GTR, node, add());
-        } else
-            return node;
+        } else if (consume(">=")) {
+            node = new_node(ND_GEQ, node, add());
+        }
+        return node;
     }
 }
 
@@ -322,7 +329,7 @@ Token *tokenize(char *p) {
         }
 
         if (strncmp(p, "==", 2) == 0 || strncmp(p, "!=", 2) == 0 ||
-            strncmp(p, "<=", 2) == 0
+            strncmp(p, "<=", 2) == 0 || strncmp(p, ">=", 2) == 0
                 ) {
             cur = new_token_with_len(TK_RESERVED, cur, p, 2);
             p += 2;
