@@ -301,6 +301,7 @@ Token *new_token(TokenKind kind, Token *cur, char *str) {
 }
 
 //長さ付きトークンの作成メソッド
+//TODO:need to refactor
 Token *new_token_with_len(TokenKind kind, Token *cur, char *str, int len) {
     Token *tok = new_token(kind, cur, str);
     tok->len = len;
