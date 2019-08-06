@@ -1,5 +1,32 @@
 #include "ycc.h"
 
+Node *code[100];
+
+Node *assign() {
+    Node *node = equality();
+    if (consume("="))
+        node = new_node(ND_ASSIGN, node, assign());
+    return node;
+}
+
+Node *expr() {
+    return assign();
+}
+
+Node *stmt() {
+    Node *node = expr();
+    expect(";");
+    return node;
+
+}
+
+void program() {
+    int i = 0;
+    while (!at_eof())
+        code[i++] = stmt();
+    code[i] = NULL;
+}
+
 Node *unary() {
     if (consume("+"))
         return term();
@@ -7,10 +34,6 @@ Node *unary() {
         return new_node(ND_SUB, new_node_num(0), term());
     return term();
 }
-
-
-//式をつくる
-Node *expr() { return equality(); }
 
 Node *equality() {
     Node *node = relational();
@@ -76,6 +99,15 @@ Node *term() {
         return node;
     }
 
+    Token *tok = consume_ident();
+    if (tok) {
+        Node *node = calloc(1, sizeof(Node));
+        node->kind = ND_LVAR;
+        node->offset = (tok->str[0] - 'a' + 1) * 8;
+        return node;
+    }
+
+
     // そうでなければ数値のはず
     return new_node_num(expect_number());
 }
@@ -88,6 +120,17 @@ bool consume(char *op) {
         return false;
     token = token->next;
     return true;
+}
+
+// トークンが変数として有効な記号のときには、トークンを一つ読み進めて
+//　それ以外の場合にはNULLを返す
+Token *consume_ident() {
+    if (token->kind == TK_IDENT) {
+        Token *rtn = token;
+        token = token->next;
+        return rtn;
+    }
+    return NULL;
 }
 
 // 次のトークンが期待している記号のときには、トークンを1つ読み進める。
@@ -127,6 +170,10 @@ Token *new_token_with_len(TokenKind kind, Token *cur, char *str, int len) {
     return tok;
 }
 
+bool at_eof() {
+    return token->kind == TK_EOF;
+}
+
 // 入力文字列pをトークナイズしてそれを返す
 Token *tokenize(char *p) {
     Token head;
@@ -140,6 +187,12 @@ Token *tokenize(char *p) {
             continue;
         }
 
+        if ('a' <= *p && *p <= 'z') {
+            cur = new_token(TK_IDENT, cur, p++);
+            cur->len = 1;
+            continue;
+        }
+
         if (strncmp(p, "==", 2) == 0 || strncmp(p, "!=", 2) == 0 ||
             strncmp(p, "<=", 2) == 0 || strncmp(p, ">=", 2) == 0
                 ) {
@@ -149,7 +202,7 @@ Token *tokenize(char *p) {
         }
 
         if (*p == '>' || *p == '<' || *p == '+' || *p == '-' || *p == '*' || *p == '/' ||
-            *p == '(' || *p == ')') {
+            *p == '(' || *p == ')' || *p == ';' || *p == '=') {
             cur = new_token(TK_RESERVED, cur, p++);
             continue;
         }
