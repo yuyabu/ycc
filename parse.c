@@ -1,5 +1,35 @@
 #include "ycc.h"
 
+typedef struct LVar LVar;
+
+// ローカル変数の型
+struct LVar {
+    LVar *next; // 次の変数かNULL
+    char *name; // 変数の名前
+    int len;    // 名前の長さ
+    int offset; // RBPからのオフセット
+};
+
+// ローカル変数
+static LVar *locals;
+
+static LVar *find_lvar(Token *tok);
+
+static bool isAlpha(char *p);
+
+/**
+ * local変数をlinked list形状で保存しているlocalsから
+ * @param tok
+ * @return
+ */
+LVar *find_lvar(Token *tok) {
+    for (LVar *var = locals; var; var = var->next)
+        if (var->len == tok->len && !memcmp(tok->str, var->name, var->len))
+            return var;
+    return NULL;
+}
+
+
 Node *code[100];
 
 Node *assign() {
@@ -91,6 +121,18 @@ Node *mul() {
     }
 }
 
+/**
+ * アルファベットか判定する
+ * @param p 判定したい文字を参照するポインタ
+ * @return true;アルファベット(a-z)の場合 false:それ以外
+ */
+bool isAlpha(char *p) {
+    if ('a' <= *p && *p <= 'z') {
+        return true;
+    }
+    return false;
+}
+
 //終端記号(terminal symbol)をつくる
 Node *term() {
     if (consume("(")) {
@@ -103,7 +145,20 @@ Node *term() {
     if (tok) {
         Node *node = calloc(1, sizeof(Node));
         node->kind = ND_LVAR;
-        node->offset = (tok->str[0] - 'a' + 1) * 8;
+
+        LVar *lvar = find_lvar(tok);
+        if (lvar) {
+            node->offset = lvar->offset;
+        } else {
+            lvar = calloc(1, sizeof(LVar));
+            lvar->next = locals;
+            lvar->name = tok->str;
+            lvar->len = tok->len;
+            lvar->offset = locals->offset + 8;
+            node->offset = lvar->offset;
+            locals = lvar;
+        }
+        //node->offset = (tok->str[0] - 'a' + 1) * 8;
         return node;
     }
 
@@ -180,6 +235,9 @@ Token *tokenize(char *p) {
     head.next = NULL;
     Token *cur = &head;
 
+    locals = calloc(1, sizeof(LVar));
+    locals->offset = 0;
+
     while (*p) {
         // 空白文字をスキップ
         if (isspace(*p)) {
@@ -187,9 +245,17 @@ Token *tokenize(char *p) {
             continue;
         }
 
-        if ('a' <= *p && *p <= 'z') {
-            cur = new_token(TK_IDENT, cur, p++);
-            cur->len = 1;
+
+        if (isAlpha(p)) {
+            char *tmp = p;
+            p++;
+            int len = 1;
+            while (isAlpha(p)) {
+                len++;
+                p++;
+            }
+            cur = new_token(TK_IDENT, cur, tmp);
+            cur->len = len;
             continue;
         }
 
