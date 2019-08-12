@@ -44,4 +44,7 @@ try 0 '-101 >= -100;'
 try 14 'a = 3;b = 5 * 6 - 8; a + b / 2;'
 try 11 'aa=10;b=20;ccc=b-aa;ccc+1;'
 try 1 'aa=10;bb=20;bb=bb/2;aa==bb;'
+try 14 'a = 3;b = 5 * 6 - 8;return a + b / 2;'
+try 5 'return 5;return 8;'
+try 8 'returnx = 3;return returnx + 5;'
 echo OK
