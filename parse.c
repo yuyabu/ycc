@@ -1,3 +1,10 @@
+/**
+ * @file parse.c
+ * @brief トークナイズと再帰下降構文解析を行うプログラム
+ * @author
+ *
+ */
+
 #include "ycc.h"
 
 typedef struct LVar LVar;
@@ -41,6 +48,11 @@ LVar *find_lvar(Token *tok) {
 
 Node *code[100];
 
+/**
+ * 代入ノードを作成する
+ *
+ * @return
+ */
 Node *assign() {
     Node *node = equality();
     if (consume("="))
@@ -48,10 +60,35 @@ Node *assign() {
     return node;
 }
 
-Node *expr() {
-    return assign();
+
+/**
+ * tokenからprogramを作る。
+ *
+ * program = stmt*
+ *
+ */
+void program() {
+    int i = 0;
+    while (!at_eof())
+        code[i++] = stmt();
+    code[i] = NULL;
 }
 
+Node *unary() {
+    if (consume("+"))
+        return term();
+    if (consume("-"))
+        return new_node(ND_SUB, new_node_num(0), term());
+    return term();
+}
+
+/**
+ * 文のノードを作成する
+ *
+ * stmt    = expr ";"
+ *      | "return" expr ";"
+ * @return
+ */
 Node *stmt() {
     Node *node;
 
@@ -68,21 +105,23 @@ Node *stmt() {
 
 }
 
-void program() {
-    int i = 0;
-    while (!at_eof())
-        code[i++] = stmt();
-    code[i] = NULL;
+/**
+ * 式をつくる
+ *
+ * EBNF
+ * expr       = assign
+ *
+ * @return
+ */
+Node *expr() {
+    return assign();
 }
 
-Node *unary() {
-    if (consume("+"))
-        return term();
-    if (consume("-"))
-        return new_node(ND_SUB, new_node_num(0), term());
-    return term();
-}
 
+/**
+ * 2項の等価比較のnodeをつくる
+ * @return
+ */
 Node *equality() {
     Node *node = relational();
 
@@ -96,6 +135,10 @@ Node *equality() {
     }
 }
 
+/**
+ * 2項の比較述語のnodeをつくる
+ * @return
+ */
 Node *relational() {
     Node *node = add();
     for (;;) {
@@ -112,6 +155,10 @@ Node *relational() {
     }
 }
 
+/**
+ * 加減算の項をつくる
+ * @return tokenから作成したnode
+ */
 Node *add() {
     Node *node = mul();
 
@@ -125,7 +172,10 @@ Node *add() {
     }
 }
 
-//積商の項をつくる
+/**
+ * 積商の項をつくる
+ * @return　tokenから作成したnode
+ */
 Node *mul() {
     Node *node = unary();
 
@@ -151,7 +201,10 @@ bool isAlpha(char *p) {
     return false;
 }
 
-//終端記号(terminal symbol)をつくる
+/**
+ * 終端記号(terminal symbol)をつくる
+ * @return
+ */
 Node *term() {
     if (consume("(")) {
         Node *node = expr();
@@ -176,17 +229,19 @@ Node *term() {
             node->offset = lvar->offset;
             locals = lvar;
         }
-        //node->offset = (tok->str[0] - 'a' + 1) * 8;
         return node;
     }
-
 
     // そうでなければ数値のはず
     return new_node_num(expect_number());
 }
 
-// 次のトークンが期待している記号のときには、トークンを1つ読み進めて
-// 真を返す。それ以外の場合には偽を返す。
+/**
+ * 次のトークンが期待している記号のときには、トークンを1つ読み進めて\
+ * 真を返す。それ以外の場合には偽を返す。
+ * @param op
+ * @return
+ */
 bool consume(char *op) {
     if (token->kind != TK_RESERVED || strlen(op) != token->len ||
         memcmp(token->str, op, token->len))
@@ -195,8 +250,11 @@ bool consume(char *op) {
     return true;
 }
 
-// トークンが変数として有効な記号のときには、トークンを一つ読み進めて
-//　それ以外の場合にはNULLを返す
+/**
+ * トークンが変数として有効な記号のときには、トークンを一つ読み進める
+ * それ以外の場合にはNULLを返す
+ * @return
+ */
 Token *consume_ident() {
     if (token->kind == TK_IDENT) {
         Token *rtn = token;
@@ -206,8 +264,11 @@ Token *consume_ident() {
     return NULL;
 }
 
-// 次のトークンが期待している記号のときには、トークンを1つ読み進める。
-// それ以外の場合にはエラーを報告する。
+/**
+ * 次のトークンが期待している記号のときには、トークンを1つ読み進める。
+ * それ以外の場合にはエラーを報告する。
+ * @param op 期待する記号
+ */
 void expect(char *op) {
     if (token->kind != TK_RESERVED || strlen(op) != token->len ||
         memcmp(token->str, op, token->len))
@@ -215,8 +276,12 @@ void expect(char *op) {
     token = token->next;
 }
 
-// 次のトークンが数値の場合、トークンを1つ読み進めてその数値を返す。
-// それ以外の場合にはエラーを報告する。
+
+/**
+ * 次のトークンが数値の場合、トークンを1つ読み進めてその数値を返す。
+ * それ以外の場合にはエラーを報告する。
+ * @return tokenの数値
+ */
 int expect_number() {
     if (token->kind != TK_NUM)
         error_at(token->str, "数ではありません");
@@ -225,7 +290,13 @@ int expect_number() {
     return val;
 }
 
-// 新しいトークンを作成してcurに繋げる
+/**
+ * 新しいトークンを作成してcurに繋げる
+ * @param kind
+ * @param cur
+ * @param str
+ * @return
+ */
 Token *new_token(TokenKind kind, Token *cur, char *str) {
     Token *tok = calloc(1, sizeof(Token));
     tok->kind = kind;
@@ -265,15 +336,10 @@ Token *tokenize(char *p) {
 
         //6文字読み進めてreturn + (空白)だった場合、return文としてtokenizeする
         if (strncmp(p, "return", 6) == 0 && !is_alnum(p[6])) {
-//            tokens[i].ty = TK_RETURN; //2019/08/12時点で本の間違っているところ
-//            tokens[i].str = p;
-//            i++;
-            cur = new_token(TK_RESERVED, cur, p); //これが正解
-            cur->len = 6;
+            cur = new_token_with_len(TK_RESERVED, cur, p, 6);
             p += 6;
             continue;
         }
-
 
         if (isAlpha(p)) {
             char *tmp = p;
@@ -283,8 +349,7 @@ Token *tokenize(char *p) {
                 len++;
                 p++;
             }
-            cur = new_token(TK_IDENT, cur, tmp);
-            cur->len = len;
+            cur = new_token_with_len(TK_IDENT, cur, tmp, len);
             continue;
         }
 
@@ -298,12 +363,12 @@ Token *tokenize(char *p) {
 
         if (*p == '>' || *p == '<' || *p == '+' || *p == '-' || *p == '*' || *p == '/' ||
             *p == '(' || *p == ')' || *p == ';' || *p == '=') {
-            cur = new_token(TK_RESERVED, cur, p++);
+            cur = new_token_with_len(TK_RESERVED, cur, p++, 1);
             continue;
         }
 
         if (isdigit(*p)) {
-            cur = new_token(TK_NUM, cur, p);
+            cur = new_token_with_len(TK_NUM, cur, p, 1);
             cur->val = strtol(p, &p, 10);
             continue;
         }
