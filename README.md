@@ -1,9 +1,10 @@
 # Compilerbook実践場所
 
-ruiさんのcompilerbookを実践するリポジトリです。
+ruiさんの[compilerbook](https://www.sigbus.info/compilerbook)を実践するリポジトリです。
 
-- commitメッセージは英語
-- ドキュメントやコメントは日本語
+- プロジェクト名はyuyabu C compilerの略でyccとしました
+- commitメッセージは英語です
+- ドキュメントやコメントは日本語です
 
 ## 製作日記
 
