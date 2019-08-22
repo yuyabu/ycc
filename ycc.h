@@ -1,3 +1,22 @@
+/**
+ * @file ycc.h
+ * @brief Cコンパイラ
+ *
+ * 以下の文法に対応
+ *
+ * program    = stmt*
+ * stmt       = expr ";" | "return" expr ";"
+ * expr       = assign
+ * assign     = equality ("=" assign)?
+ * equality   = relational ("==" relational | "!=" relational)*
+ * relational = add ("<" add | "<=" add | ">" add | ">=" add)*
+ * add        = mul ("+" mul | "-" mul)*
+ * mul        = unary ("*" unary | "/" unary)*
+ * unary      = ("+" | "-")? primary
+ * primary    = num | ident | "(" expr ")"
+ *
+ */
+
 #include <ctype.h>
 #include <stdarg.h>
 #include <stdbool.h>
@@ -80,7 +99,7 @@ extern Node *mul();
 
 extern Node *unary();
 
-extern Node *term();
+extern Node *primary();
 
 extern Node *new_node(NodeKind kind, Node *lhs, Node *rhs);
 

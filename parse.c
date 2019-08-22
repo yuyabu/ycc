@@ -1,7 +1,7 @@
 /**
  * @file parse.c
  * @brief トークナイズと再帰下降構文解析を行うプログラム
- * @author
+ *
  *
  */
 
@@ -34,9 +34,9 @@ int is_alnum(char c) {
 }
 
 /**
- * local変数をlinked list形状で保存しているlocalsから
+ * local変数をlinked list形状で保存しているlocalsから引数のtokが宣言されているか判定する
  * @param tok
- * @return
+ * @return　見つかったローカル変数
  */
 LVar *find_lvar(Token *tok) {
     for (LVar *var = locals; var; var = var->next)
@@ -46,19 +46,11 @@ LVar *find_lvar(Token *tok) {
 }
 
 
-Node *code[100];
-
 /**
- * 代入ノードを作成する
- *
- * @return
+ *  programとして文の集合を保存する
+ *  MEMO:変数名としてはstatementsが適切な気がする？
  */
-Node *assign() {
-    Node *node = equality();
-    if (consume("="))
-        node = new_node(ND_ASSIGN, node, assign());
-    return node;
-}
+Node *code[100];
 
 
 /**
@@ -74,19 +66,10 @@ void program() {
     code[i] = NULL;
 }
 
-Node *unary() {
-    if (consume("+"))
-        return term();
-    if (consume("-"))
-        return new_node(ND_SUB, new_node_num(0), term());
-    return term();
-}
-
 /**
  * 文のノードを作成する
  *
- * stmt    = expr ";"
- *      | "return" expr ";"
+ * stmt = expr ";" | "return" expr ";"
  * @return
  */
 Node *stmt() {
@@ -109,7 +92,7 @@ Node *stmt() {
  * 式をつくる
  *
  * EBNF
- * expr       = assign
+ * expr = assign
  *
  * @return
  */
@@ -117,9 +100,27 @@ Node *expr() {
     return assign();
 }
 
+/**
+ * 代入ノードを作成する
+ *
+ * 以下のEBNFに対応
+ * assign = equality ("=" assign)?
+ *
+ * @return
+ */
+Node *assign() {
+    Node *node = equality();
+    if (consume("="))
+        node = new_node(ND_ASSIGN, node, assign());
+    return node;
+}
 
 /**
  * 2項の等価比較のnodeをつくる
+ *
+ * EBNF
+ * equality = relational ("==" relational | "!=" relational)*
+ *
  * @return
  */
 Node *equality() {
@@ -137,6 +138,10 @@ Node *equality() {
 
 /**
  * 2項の比較述語のnodeをつくる
+ *
+ * EBNF
+ * relational = add ("<" add | "<=" add | ">" add | ">=" add)*
+ *
  * @return
  */
 Node *relational() {
@@ -157,6 +162,10 @@ Node *relational() {
 
 /**
  * 加減算の項をつくる
+ *
+ * EBNF
+ * add = mul ("+" mul | "-" mul)*
+ *
  * @return tokenから作成したnode
  */
 Node *add() {
@@ -174,6 +183,10 @@ Node *add() {
 
 /**
  * 積商の項をつくる
+ *
+ * EBNF
+ * mul = unary ("*" unary | "/" unary)*
+ *
  * @return　tokenから作成したnode
  */
 Node *mul() {
@@ -190,6 +203,24 @@ Node *mul() {
 }
 
 /**
+ * 単項演算子のノードをつくる
+ *
+ * EBNF
+ * unary = ("+" | "-")? primary
+ *
+ * ※現在は整数の符号にしか対応していない
+ *
+ * @return
+ */
+Node *unary() {
+    if (consume("+"))
+        return primary();
+    if (consume("-"))
+        return new_node(ND_SUB, new_node_num(0), primary());
+    return primary();
+}
+
+/**
  * アルファベットか判定する
  * @param p 判定したい文字を参照するポインタ
  * @return true;アルファベット(a-z)の場合 false:それ以外
@@ -202,10 +233,10 @@ bool isAlpha(char *p) {
 }
 
 /**
- * 終端記号(terminal symbol)をつくる
+ * primary(原子要素)をつくる
  * @return
  */
-Node *term() {
+Node *primary() {
     if (consume("(")) {
         Node *node = expr();
         expect(")");
