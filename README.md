@@ -11,3 +11,13 @@ ruiさんの[compilerbook](https://www.sigbus.info/compilerbook)を実践する�
 - 日々の制作過程・進捗はwikiに記録しています
 
 https://github.com/yuyabu/ycc/wiki
+
+
+## how to build
+
+
+```
+mkdir build && cd build
+cmake ../ycc
+cmake --build .
+```
